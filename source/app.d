@@ -3,6 +3,31 @@ import std.range;
 import std.algorithm;
 import std.system;
 import std.datetime;
+import std.traits;
+import std.typecons;
+
+template debug_write(T){
+	import std.meta;
+	alias field_names = FieldNameTuple!T;
+	enum typename = fullyQualifiedName!T;
+
+	template to_tuple(string name){
+		import std.meta;
+		import std.format;
+		alias to_tuple = AliasSeq!(
+				mixin(format("%s.%s.offsetof",typename,name)),
+				mixin(format("%s.%s.sizeof",typename,name)),
+				mixin(format("(%s self) => self.%s",typename,name)));
+	}
+
+	auto debug_write(T val){
+		writeln("| Offset | Size |    Value |");
+		foreach(name;field_names){
+			auto tuple = to_tuple!name;
+			writefln("| %6x | %4x | %8x |",tuple[0],tuple[1],tuple[2](val));
+		}
+	}
+}
 
 align(1)
 struct PE_file_header{
@@ -69,7 +94,7 @@ struct Assembly{
 		pe_file_header.optional_header_size = range.read!ushort;
 		pe_file_header.characteristics = range.read!ushort;
 		pe_file_header.sizeof.writeln;
-		pe_file_header.writeln;
+		debug_write(pe_file_header);
 		assert(pe_file_header.machine == 0x14c);
 		assert(pe_file_header.pointer_to_symbol_table == 0);
 		assert(pe_file_header.number_of_symbols == 0);
