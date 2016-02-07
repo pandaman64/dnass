@@ -107,7 +107,34 @@ struct Assembly{
 }
 
 auto readAssembly(File file){
-	return Assembly(file.byChunk(1024).joiner);
+	return Assembly(binaryDebugRange(file.byChunk(1024).joiner));
+}
+
+class BinaryDebugRange(R)
+if(isInputRange!R && is(ElementType!R == ubyte)){
+	R range;
+	size_t consumed = 0;
+
+	this(R r){
+		range = r;
+	}
+	bool empty(){
+		return range.empty;
+	}
+	void popFront(){
+		range.popFront();
+		consumed++;
+	}
+	ubyte front(){
+		return range.front;
+	}
+	@property
+	size_t ConsumedLength(){
+		return consumed;
+	}
+}
+auto binaryDebugRange(R)(R range){
+	return new BinaryDebugRange!R(range);
 }
 
 void main()
