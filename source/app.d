@@ -20,11 +20,16 @@ template debug_write(T){
 				mixin(format("(%s self) => self.%s",typename,name)));
 	}
 
+	template get_len(string name){
+		alias get_len = AliasSeq!(name.length);
+	}
+
 	auto debug_write(T val){
-		writeln("| Offset | Size |    Value |");
+		auto name_len = max(staticMap!(get_len,field_names));
+		writefln("| %*s | Offset | Size |    Value |",name_len,"Field");
 		foreach(name;field_names){
 			auto tuple = to_tuple!name;
-			writefln("| %6x | %4x | %8x |",tuple[0],tuple[1],tuple[2](val));
+			writefln("| %*s | %6x | %4x | %8x |",name_len,name,tuple[0],tuple[1],tuple[2](val));
 		}
 	}
 }
