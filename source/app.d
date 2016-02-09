@@ -89,6 +89,10 @@ struct Assembly{
 		assert(lfanew >= 128);
 		range.popFrontN(lfanew - 4 - 0x3c);
 
+		//PE signature
+		//PE signature must be "PE\0\0"
+		assert(range.readSome!ubyte(4) == [0x50,0x45,0,0]);
+
 		//Read PE file header in PE header
 		PE_file_header pe_file_header = void;
 		pe_file_header.machine = range.read!ushort;
