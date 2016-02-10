@@ -102,14 +102,12 @@ struct Assembly{
 		pe_file_header.number_of_symbols = range.read!uint;
 		pe_file_header.optional_header_size = range.read!ushort;
 		pe_file_header.characteristics = range.read!ushort;
-		pe_file_header.sizeof.writeln;
-		debug_write(pe_file_header);
 		assert(pe_file_header.machine == 0x14c);
 		assert(pe_file_header.pointer_to_symbol_table == 0);
 		assert(pe_file_header.number_of_symbols == 0);
 		writefln("sections : %d\ntime : %s\nheader size : %d\ncharacteristics : %d",
 				pe_file_header.number_of_sections,
-				pe_file_header.timestamp.unixTimeToStdTime,
+				SysTime.fromUnixTime(pe_file_header.timestamp).toSimpleString,
 				pe_file_header.optional_header_size,
 				pe_file_header.characteristics);
 	}
