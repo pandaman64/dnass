@@ -35,7 +35,7 @@ template debug_write(T){
 }
 
 align(1)
-struct PE_file_header{
+struct PEFileHeader{
 	ushort machine;
 	ushort number_of_sections;
 	uint timestamp;
@@ -43,6 +43,72 @@ struct PE_file_header{
 	uint number_of_symbols;
 	ushort optional_header_size;
 	ushort characteristics;
+}
+
+align(1)
+struct PEOptionalHeader{
+	//standard fields
+	align(1)
+	struct StandardFields{
+		ushort magic;
+		ubyte lmajor;
+		ubyte lminor;
+		uint code_size;
+		uint initialized_data_size;
+		uint uninitialized_data_size;
+		uint entry_point_rva;
+		uint base_of_code;
+		uint base_of_data;
+	}
+	//Windows NT-specific fields
+	align(1)
+	struct NT_SpecificFields{
+		uint image_base;
+		uint section_alignment;
+		uint file_alignment;
+		ushort os_major;
+		ushort os_minor;
+		ushort user_major;
+		ushort user_minor;
+		ushort subsys_major;
+		ushort subsys_minor;
+		uint reserved;
+		uint image_size;
+		uint header_size;
+		uint file_checksum;
+		ushort subsystem;
+		ushort dll_flags;
+		uint stack_reserve_size;
+		uint stack_commit_size;
+		uint heap_reserve_size;
+		uint heap_commit_size;
+		uint loader_flags;
+		uint number_of_datadirectories;
+	}
+	//data directories
+	align(1)
+	struct DataDirectories{
+		ulong export_table;
+		ulong import_table;
+		ulong resource_table;
+		ulong exception_table;
+		ulong certificate_table;
+		ulong base_relocation_table;
+		//conflict with D's debug keyword
+		ulong _debug;
+		ulong copyright;
+		ulong global_ptr;
+		ulong tls_table;
+		ulong load_config_table;
+		ulong bound_import;
+		ulong iat;
+		ulong delay_import_descriptor;
+		ulong cli_header;
+		ulong reserved;
+	}
+	StandardFields standard_fields;
+	NT_SpecificFields nt_specific_fields;
+	DataDirectories data_directories;
 }
 
 auto read(T,R)(ref R range,Endian endian = Endian.littleEndian)
@@ -94,14 +160,16 @@ struct Assembly{
 		assert(range.readSome!ubyte(4) == [0x50,0x45,0,0]);
 
 		//Read PE file header in PE header
-		PE_file_header pe_file_header = void;
+		/*PE_file_header pe_file_header = void;
 		pe_file_header.machine = range.read!ushort;
 		pe_file_header.number_of_sections = range.read!ushort;
 		pe_file_header.timestamp = range.read!uint;
 		pe_file_header.pointer_to_symbol_table = range.read!uint;
 		pe_file_header.number_of_symbols = range.read!uint;
 		pe_file_header.optional_header_size = range.read!ushort;
-		pe_file_header.characteristics = range.read!ushort;
+		pe_file_header.characteristics = range.read!ushort;*/
+		//This may fail in another endian environment
+		auto pe_file_header = range.read!PEFileHeader;
 		assert(pe_file_header.machine == 0x14c);
 		assert(pe_file_header.pointer_to_symbol_table == 0);
 		assert(pe_file_header.number_of_symbols == 0);
@@ -110,6 +178,12 @@ struct Assembly{
 				SysTime.fromUnixTime(pe_file_header.timestamp).toSimpleString,
 				pe_file_header.optional_header_size,
 				pe_file_header.characteristics);
+
+		auto pe_optional_header = range.read!PEOptionalHeader;
+		assert(pe_optional_header.standard_fields.sizeof == 28);
+		assert(pe_optional_header.nt_specific_fields.sizeof == 68);
+		assert(pe_optional_header.data_directories.sizeof == 128);
+		assert(pe_optional_header.sizeof == 28 + 68 + 128);
 	}
 }
 
