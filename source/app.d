@@ -83,7 +83,7 @@ struct PEOptionalHeader{
 		uint heap_reserve_size;
 		uint heap_commit_size;
 		uint loader_flags;
-		uint number_of_datadirectories;
+		uint number_of_data_directories;
 	}
 	//data directories
 	align(1)
@@ -184,6 +184,36 @@ struct Assembly{
 		assert(pe_optional_header.nt_specific_fields.sizeof == 68);
 		assert(pe_optional_header.data_directories.sizeof == 128);
 		assert(pe_optional_header.sizeof == 28 + 68 + 128);
+
+		//PE header standard fields assertion
+		pe_optional_header.standard_fields.debug_write();
+		assert(pe_optional_header.standard_fields.magic == 0x10B);
+		assert(pe_optional_header.standard_fields.lmajor == 6);
+		assert(pe_optional_header.standard_fields.lminor == 0);
+		
+		//PE header windows NT-specific fields assertion
+		assert(pe_optional_header.nt_specific_fields.image_base % 0x10000 == 0);
+		assert(pe_optional_header.nt_specific_fields.section_alignment > pe_optional_header.nt_specific_fields.file_alignment);
+		assert(pe_optional_header.nt_specific_fields.file_alignment == 0x200);
+		assert(pe_optional_header.nt_specific_fields.os_major == 5);
+		assert(pe_optional_header.nt_specific_fields.os_minor == 0);
+		assert(pe_optional_header.nt_specific_fields.user_major == 0);
+		assert(pe_optional_header.nt_specific_fields.user_minor == 0);
+		assert(pe_optional_header.nt_specific_fields.subsys_major == 5);
+		assert(pe_optional_header.nt_specific_fields.subsys_minor == 0);
+		assert(pe_optional_header.nt_specific_fields.reserved == 0);
+		assert(pe_optional_header.nt_specific_fields.image_size % pe_optional_header.nt_specific_fields.section_alignment == 0);
+		assert(pe_optional_header.nt_specific_fields.header_size % pe_optional_header.nt_specific_fields.section_alignment == 0);
+		assert(pe_optional_header.nt_specific_fields.file_checksum == 0);
+		assert(pe_optional_header.nt_specific_fields.subsystem == 0x3 //IMAGE_SUBSYSTEM_WINDOWS_CUI
+			   || pe_optional_header.nt_specific_fields.subsystem == 0x2); //IMAGE_SUBSYSTEM_WINDOWS_GUI
+		assert((pe_optional_header.nt_specific_fields.dll_flags & 0x100f) == 0);
+		assert(pe_optional_header.nt_specific_fields.stack_reserve_size == 0x100000);
+		assert(pe_optional_header.nt_specific_fields.stack_commit_size == 0x1000);
+		assert(pe_optional_header.nt_specific_fields.heap_reserve_size == 0x100000);
+		assert(pe_optional_header.nt_specific_fields.heap_commit_size == 0x1000);
+		assert(pe_optional_header.nt_specific_fields.loader_flags == 0);
+		assert(pe_optional_header.nt_specific_fields.number_of_data_directories == 0x10);
 	}
 }
 
