@@ -111,29 +111,50 @@ struct PEOptionalHeader{
 	DataDirectories data_directories;
 }
 
-auto read(T,R)(ref R range,Endian endian = Endian.littleEndian)
-if(isInputRange!R && is(ElementType!R == ubyte)){
-	struct Arena{
-		union{
-			ubyte[T.sizeof] buffer;
-			T value;
+template read_impl(T,R){
+	static if(isInputRange!R && is(ElementType!R == ubyte)){
+		static if(isScalarType!T){
+			auto read_impl(ref R range,Endian endian = Endian.littleEndian){
+				struct Arena{
+					union{
+						ubyte[T.sizeof] buffer;
+						T value;
+					}
+				}
+				Arena arena;
+				if(endian == std.system.endian){
+					for(size_t i = 0;i < T.sizeof;i++){
+						arena.buffer[i] = range.front;
+						range.popFront();
+					}
+				}
+				else{
+					for(size_t i = 1;i <= T.sizeof;i++){
+						arena.buffer[$-i] = range.front;
+						range.popFront();
+					}
+				}
+				return arena.value;
+			}
+		}
+		else static if(isAggregateType!T){
+			auto read_impl(ref R range,Endian endian = Endian.littleEndian){
+				T ret = void;
+				//suppose no padding
+				//suppose tuple is sorted by offset
+				foreach(string name;FieldNameTuple!T){
+					enum member = "ret." ~ name;
+					mixin(member) = range.read!(typeof(mixin(member)))(endian);
+				}
+				return ret;
+			}
 		}
 	}
-	Arena arena;
-	if(endian == std.system.endian){
-		for(size_t i = 0;i < T.sizeof;i++){
-			arena.buffer[i] = range.front;
-			range.popFront();
-		}
-	}
-	else{
-		for(size_t i = 1;i <= T.sizeof;i++){
-			arena.buffer[$-i] = range.front;
-			range.popFront();
-		}
-	}
-	return arena.value;
 }
+auto read(T,R)(ref R range,Endian endian = Endian.littleEndian){
+	return read_impl!(T,R)(range,endian);
+}
+
 auto readSome(T,R)(ref R range,size_t count,Endian endian = Endian.littleEndian){
 	return generate!(() => read!T(range,endian)).take(count).array;
 }
