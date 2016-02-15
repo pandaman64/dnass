@@ -238,6 +238,22 @@ struct Assembly{
 		assert(pe_optional_header.nt_specific_fields.heap_commit_size == 0x1000);
 		assert(pe_optional_header.nt_specific_fields.loader_flags == 0);
 		assert(pe_optional_header.nt_specific_fields.number_of_data_directories == 0x10);
+
+		//PE header data directories assertion
+		assert(pe_optional_header.data_directories.export_table == 0);
+		//My dll dont follow this assertion
+		//assert(pe_optional_header.data_directories.resource_table == 0);
+		assert(pe_optional_header.data_directories.exception_table == 0);
+		assert(pe_optional_header.data_directories.certificate_table == 0);
+		//My dll dont follow this assertion
+		//assert(pe_optional_header.data_directories._debug == 0);
+		assert(pe_optional_header.data_directories.copyright == 0);
+		assert(pe_optional_header.data_directories.global_ptr == 0);
+		assert(pe_optional_header.data_directories.tls_table == 0);
+		assert(pe_optional_header.data_directories.load_config_table == 0);
+		assert(pe_optional_header.data_directories.bound_import == 0);
+		assert(pe_optional_header.data_directories.delay_import_descriptor == 0);
+		assert(pe_optional_header.data_directories.reserved == 0);
 	}
 }
 
