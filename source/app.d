@@ -111,6 +111,20 @@ struct PEOptionalHeader{
 	DataDirectories data_directories;
 }
 
+align(1)
+struct SectionHeader{
+	ubyte[8] name;
+	uint virtual_size;
+	uint virtual_address;
+	uint size_of_raw_data;
+	uint pointer_to_raw_data;
+	uint pointer_to_relocations;
+	uint pointer_to_line_numbers;
+	ushort number_of_relocations;
+	ushort number_of_line_numbers;
+	uint characteristics;
+}
+
 template read_impl(T,R){
 	static if(isInputRange!R && is(ElementType!R == ubyte)){
 		static if(isScalarType!T){
