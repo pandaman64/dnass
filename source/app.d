@@ -24,13 +24,26 @@ template debug_write(T){
 		alias get_len = AliasSeq!(name.length);
 	}
 
+	template is_numeric(string name){
+		import std.format;
+		alias is_numeric = isNumeric!(mixin(format("typeof(%s.%s)",typename,name)));
+	}
+
 	auto debug_write(T val){
 		auto name_len = max(staticMap!(get_len,field_names));
 		writefln("| %*s | Offset | Size |    Value |",name_len,"Field");
 		foreach(name;field_names){
-			auto tuple = to_tuple!name;
-			writefln("| %*s | %6x | %4x | %8x |",name_len,name,tuple[0],tuple[1],tuple[2](val));
+			alias tuple = to_tuple!name;
+			if(is_numeric!name){
+				writefln("| %*s | %6x | %4x | %8x |",name_len,name,tuple[0],tuple[1],tuple[2](val));
+			}
+			else{
+				import std.conv;
+				import std.string;
+				writefln("| %*s | %6x | %4x | %s |",name_len,name,tuple[0],tuple[1],tuple[2](val).to!string.rightJustify(8));
+			}
 		}
+		writeln;
 	}
 }
 
