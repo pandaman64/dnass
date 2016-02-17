@@ -163,7 +163,7 @@ struct SectionHeader{
 template read_impl(T,R){
 	static if(isInputRange!R && is(ElementType!R == ubyte)){
 		static if(isScalarType!T){
-			auto read_impl(ref R range,Endian endian = Endian.littleEndian){
+			auto read_impl(ref R range,Endian endian){
 				struct Arena{
 					union{
 						ubyte[T.sizeof] buffer;
@@ -187,7 +187,7 @@ template read_impl(T,R){
 			}
 		}
 		else static if(isAggregateType!T){
-			auto read_impl(ref R range,Endian endian = Endian.littleEndian){
+			auto read_impl(ref R range,Endian endian){
 				T ret = void;
 				//suppose no padding
 				//suppose tuple is sorted by offset
@@ -196,6 +196,16 @@ template read_impl(T,R){
 					mixin(member) = range.read!(typeof(mixin(member)))(endian);
 				}
 				return ret;
+			}
+		}
+		else static if(isArray!T){
+			template util(U : U[N],size_t N){
+				alias element_type = U;
+				alias length = N;
+			}
+
+			auto read_impl(ref R range,Endian endian){
+				return range.readSome!(util!T.element_type)(util!T.length,endian);
 			}
 		}
 	}
