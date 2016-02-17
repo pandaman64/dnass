@@ -313,6 +313,11 @@ struct Assembly{
 		assert(pe_optional_header.data_directories.bound_import == 0);
 		assert(pe_optional_header.data_directories.delay_import_descriptor == 0);
 		assert(pe_optional_header.data_directories.reserved == 0);
+
+		auto section_headers = range.readSome!SectionHeader(pe_file_header.number_of_sections);
+		foreach(ref section_header;section_headers){
+			section_header.debug_write;
+		}
 	}
 }
 
