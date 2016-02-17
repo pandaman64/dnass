@@ -111,9 +111,31 @@ struct PEOptionalHeader{
 	DataDirectories data_directories;
 }
 
+//represents null padded (ASCII) string
+//if underlying string is shorter than given length, remainder is filled with null
+//if the length of underlying string is exactly same as given length, the string is not null terminated 
+align(1)
+struct PaddedString(size_t len){
+	ubyte[len] content;
+
+	size_t length(){
+		size_t ret = 0;
+		while(ret < len && content[ret] != 0){
+			ret++;
+		}
+		return ret;
+	}
+
+	string toString(){
+		import std.conv;
+
+		return content[0..this.length].map!"cast(char)a".array.idup;
+	}
+}
+
 align(1)
 struct SectionHeader{
-	ubyte[8] name;
+	PaddedString!8 name;
 	uint virtual_size;
 	uint virtual_address;
 	uint size_of_raw_data;
