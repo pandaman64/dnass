@@ -227,8 +227,9 @@ auto readSome(T,R)(ref R range,size_t count,Endian endian = Endian.littleEndian)
 }
 
 struct Assembly{
-	this(R)(R range)
+	this(R)(R input_range)
 	if (isInputRange!R && is(ElementType!R == ubyte)){
+		auto range = consumptionRecordedRange(input_range);
 		//Read PE header
 		//Read MS-DOS header in PE header
 		//"MZ"
@@ -330,10 +331,10 @@ struct Assembly{
 }
 
 auto readAssembly(File file){
-	return Assembly(binaryDebugRange(file.byChunk(1024).joiner));
+	return Assembly(file.byChunk(1024).joiner);
 }
 
-class BinaryDebugRange(R)
+class ConsumptionRecordedRange(R)
 if(isInputRange!R && is(ElementType!R == ubyte)){
 	R range;
 	size_t consumed = 0;
@@ -356,8 +357,8 @@ if(isInputRange!R && is(ElementType!R == ubyte)){
 		return consumed;
 	}
 }
-auto binaryDebugRange(R)(R range){
-	return new BinaryDebugRange!R(range);
+auto consumptionRecordedRange(R)(R range){
+	return new ConsumptionRecordedRange!R(range);
 }
 
 void main()
