@@ -157,7 +157,15 @@ struct SectionHeader{
 	uint pointer_to_line_numbers;
 	ushort number_of_relocations;
 	ushort number_of_line_numbers;
-	uint characteristics;
+	enum Characteristics : uint{
+		IMAGE_SCN_CNT_CODE = 0x20, //section contains code
+		IMAGE_SCN_CNT_INITIALIZED_DATA = 0x40, //section contains initialized data
+		IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x80, //section contains uninitialized data
+		IMAGE_SCN_MEM_EXECUTE = 0x20000000, //section can be executed as code
+		IMAGE_SCN_MEM_READ = 0x40000000, //section can be read
+		IMAGE_SCN_MEM_WRITE = 0x80000000 //section can be written to
+	}
+	Characteristics characteristics;
 }
 
 template read_impl(T,R){
