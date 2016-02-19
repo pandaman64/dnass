@@ -131,7 +131,7 @@ align(1)
 struct PaddedString(size_t len){
 	ubyte[len] content;
 
-	size_t length(){
+	size_t length() const{
 		size_t ret = 0;
 		while(ret < len && content[ret] != 0){
 			ret++;
@@ -139,7 +139,7 @@ struct PaddedString(size_t len){
 		return ret;
 	}
 
-	string toString(){
+	string toString() const{
 		import std.conv;
 
 		return content[0..this.length].map!"cast(char)a".array.idup;
@@ -323,7 +323,7 @@ struct Assembly{
 		assert(pe_optional_header.data_directories.reserved == 0);
 
 		auto section_headers = range.readSome!SectionHeader(pe_file_header.number_of_sections);
-		foreach(ref section_header;section_headers){
+		foreach(const section_header;section_headers){
 			section_header.debug_write;
 		}
 	}
