@@ -168,6 +168,11 @@ struct SectionHeader{
 	Characteristics characteristics;
 }
 
+struct Section{
+	SectionHeader header;
+	ubyte[] data;
+}
+
 template read_impl(T,R){
 	static if(isInputRange!R && is(ElementType!R == ubyte)){
 		static if(isScalarType!T){
@@ -323,14 +328,22 @@ struct Assembly{
 		assert(pe_optional_header.data_directories.delay_import_descriptor == 0);
 		assert(pe_optional_header.data_directories.reserved == 0);
 
-		auto section_headers = range.readSome!SectionHeader(pe_file_header.number_of_sections);
-		foreach(const section_header;section_headers){
-			section_header.debug_write;
+		auto sections = range.readSome!SectionHeader(pe_file_header.number_of_sections).map!(header => new Section(header,[])).array;
+		foreach(const section;sections){
+			section.header.debug_write;
 			//section header assertion
-			assert(section_header.size_of_raw_data % pe_optional_header.nt_specific_fields.file_alignment == 0);
-			assert(section_header.pointer_to_raw_data % pe_optional_header.nt_specific_fields.file_alignment == 0);
+			assert(section.header.size_of_raw_data % pe_optional_header.nt_specific_fields.file_alignment == 0);
+			assert(section.header.pointer_to_raw_data % pe_optional_header.nt_specific_fields.file_alignment == 0);
 			//do not treat uninitialized data now
-			assert(!(section_header.characteristics & SectionHeader.Characteristics.IMAGE_SCN_CNT_UNINITIALIZED_DATA));
+			assert(!(section.header.characteristics & SectionHeader.Characteristics.IMAGE_SCN_CNT_UNINITIALIZED_DATA));
+		}
+
+		//read each section
+		foreach(ref section;sections){
+			range.popFrontN(section.header.pointer_to_raw_data - range.ConsumedLength);
+			section.data = range.readSome!ubyte(section.header.size_of_raw_data);
+		}
+
 		}
 	}
 }
