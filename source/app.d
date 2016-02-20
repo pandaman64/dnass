@@ -173,6 +173,22 @@ struct Section{
 	ubyte[] data;
 }
 
+align(1)
+struct CLIHeader{
+	uint cb;
+	ushort major_runtime_version;
+	ushort minor_runtime_version;
+	ulong metadata;
+	uint flags;
+	uint entry_point_token;
+	ulong resources;
+	ulong strong_name_sigunature;
+	ulong code_manager_table;
+	ulong vtable_fixups;
+	ulong exported_address_table_jumps;
+	ulong managed_native_header;
+}
+
 template read_impl(T,R){
 	static if(isInputRange!R && is(ElementType!R == ubyte)){
 		static if(isScalarType!T){
@@ -229,6 +245,13 @@ auto read(T,R)(ref R range,Endian endian = Endian.littleEndian){
 
 auto readSome(T,R)(ref R range,size_t count,Endian endian = Endian.littleEndian){
 	return generate!(() => read!T(range,endian)).take(count).array;
+}
+
+uint get_rva(ulong directory){
+	return directory & 0x00000000FFFFFFFFuL;
+}
+uint get_size(ulong directory){
+	return (directory & 0xFFFFFFFF00000000uL) >> 32;
 }
 
 struct Assembly{
@@ -344,6 +367,20 @@ struct Assembly{
 			section.data = range.readSome!ubyte(section.header.size_of_raw_data);
 		}
 
+		//extract CLI header
+		auto cli_header_address = pe_optional_header.data_directories.cli_header.get_rva;
+		auto cli_header_size = pe_optional_header.data_directories.cli_header.get_size;
+		foreach(const section;sections){
+			if(section.header.virtual_address <= cli_header_address &&
+			   cli_header_address < section.header.virtual_address + section.header.virtual_size){
+				auto begin = cli_header_address - section.header.virtual_address;
+				auto end = begin + cli_header_size;
+				assert(end <= section.header.virtual_size);
+				auto buffer = section.data[begin..end].dup;
+				writeln(typeof(section.data).stringof);
+				auto cli_header = buffer.read!CLIHeader;
+				cli_header.debug_write;
+			}
 		}
 	}
 }
