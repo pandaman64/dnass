@@ -190,7 +190,7 @@ struct CLIHeader{
 }
 
 template read_impl(T,R){
-	static if(isInputRange!R && is(ElementType!R == ubyte)){
+	static if(isInputRange!R && isImplicitlyConvertible!(ElementType!R,ubyte)){
 		static if(isScalarType!T){
 			auto read_impl(ref R range,Endian endian){
 				struct Arena{
@@ -351,7 +351,7 @@ struct Assembly{
 		assert(pe_optional_header.data_directories.delay_import_descriptor == 0);
 		assert(pe_optional_header.data_directories.reserved == 0);
 
-		auto sections = range.readSome!SectionHeader(pe_file_header.number_of_sections).map!(header => new Section(header,[])).array;
+		auto sections = range.readSome!SectionHeader(pe_file_header.number_of_sections).map!(header => Section(header,[])).array;
 		foreach(const section;sections){
 			section.header.debug_write;
 			//section header assertion
