@@ -174,6 +174,12 @@ struct Section{
 }
 
 align(1)
+struct Directory{
+	uint relative_virtual_address;
+	uint size;
+}
+
+align(1)
 struct CLIHeader{
 	uint cb;
 	ushort major_runtime_version;
